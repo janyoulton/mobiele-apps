@@ -35,7 +35,7 @@
 
         <!--TODO: Content should be placed within the following grid-->
         <StackPanel Grid.Row="1" Margin="19,19,19,19">
-            <Button Name="GPS" Content="Get GPS location" Click="GPS_Click"/>
+            <!--<Button Name="GPS" Content="Get GPS location" Click="GPS_Click"/>-->
             <TextBlock Name="geolocation" Text="Your location." FontSize="28"/>
             <Maps:MapControl />
         </StackPanel>

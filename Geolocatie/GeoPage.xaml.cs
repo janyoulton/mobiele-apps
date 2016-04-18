@@ -110,35 +110,44 @@ namespace Geolocatie
 
         #endregion
 
-        private async void GPS_Click(object sender, RoutedEventArgs e)
-        {
-            Geolocator geolocator = new Geolocator();
-            geolocator.DesiredAccuracyInMeters = 50;
+       // private async void GPS_Click(object sender, RoutedEventArgs e)
+       // {
+       //     Geolocator geolocator = new Geolocator();
+       //     geolocator.DesiredAccuracyInMeters = 50;
             
-            try
-            {
-                Geoposition geoposition = await geolocator.GetGeopositionAsync(maximumAge: TimeSpan.FromMinutes(5), timeout: TimeSpan.FromSeconds(10));
+       //     try
+       //     {
+       //         Geoposition geoposition = await geolocator.GetGeopositionAsync(maximumAge: TimeSpan.FromMinutes(5), timeout: TimeSpan.FromSeconds(10));
 
-                string latitude = geoposition.Coordinate.Latitude.ToString("0.000");
-                string longitude = geoposition.Coordinate.Longitude.ToString("0.000");
+       //         string latitude = geoposition.Coordinate.Latitude.ToString("0.000");
+       //         string longitude = geoposition.Coordinate.Longitude.ToString("0.000");
 
-                //given by {{Icode|geoposition}}
-                geolocation.Text = "Coordinates location:" + latitude + ", " + longitude;
-
-
-            }
+       //         //given by {{Icode|geoposition}}
+       //         geolocation.Text = "Coordinates location:" + latitude + ", " + longitude;
 
 
+       //     }
 
-            //If an error is catch 2 are the main causes: the first is that you forgot to include ID_CAP_LOCATION in your app manifest.  
-            //The second is that the user doesn't turned on the Location Services 
-            catch (Exception ex)
-            {
-                //error
+
+
+       //     //If an error is catch 2 are the main causes: the first is that you forgot to include ID_CAP_LOCATION in your app manifest.  
+       //     //The second is that the user doesn't turned on the Location Services 
+       //     catch (Exception ex)
+       //     {
+       //         //error
                  
-            }
+       //     }
 
-       }
+       //}
+
+        private void CenterMap(double lat, double lon)
+        {
+            MyMap.Center = new Geopoint(new BasicGeoposition()
+            {
+                Latitude = lat,
+                Longitude = lon
+            });
+        }
 
         private async void getLocation()
         {
@@ -154,7 +163,9 @@ namespace Geolocatie
                     maximumAge: TimeSpan.FromMinutes(1),
                     timeout: TimeSpan.FromSeconds(20));
                 
-                message("Lat: " + gp.Coordinate.Point.Position.Latitude + "\n Lon: " + gp.Coordinate.Point.Position.Longitude, "Coordinates");
+                //message("Latitude: " + gp.Coordinate.Point.Position.Latitude + "\nLongitude: " + gp.Coordinate.Point.Position.Longitude, "Coordinates");
+                CenterMap(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude);
+                MyMap.ZoomLevel = (int)slider.Value;
             }
             catch (Exception e)
             {
@@ -174,5 +185,15 @@ namespace Geolocatie
             catch (Exception) { }
         }
 
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        {
+            getLocation();
+        }
+
+        private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (slider != null)
+                MyMap.ZoomLevel = (int)slider.Value;
+        }
     }
 }

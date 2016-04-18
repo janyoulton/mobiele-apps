@@ -11,7 +11,7 @@
 
     <Page.BottomAppBar>
         <CommandBar>
-            <AppBarButton Icon="Target" Label="Get Location" Click="AppBarButton_Click"/>
+            <AppBarButton Icon="Target"  Label="Get Location" Click="AppBarButton_Click"/>
         </CommandBar>
     </Page.BottomAppBar>
 

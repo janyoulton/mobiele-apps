@@ -127,10 +127,7 @@ namespace Geolocatie
        //         //given by {{Icode|geoposition}}
        //         geolocation.Text = "Coordinates location:" + latitude + ", " + longitude;
 
-
        //     }
-
-
 
        //     //If an error is catch 2 are the main causes: the first is that you forgot to include ID_CAP_LOCATION in your app manifest.  
        //     //The second is that the user doesn't turned on the Location Services 
@@ -167,6 +164,7 @@ namespace Geolocatie
                 
                 //message("Latitude: " + gp.Coordinate.Point.Position.Latitude + "\nLongitude: " + gp.Coordinate.Point.Position.Longitude, "Coordinates");
                 CenterMap(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude);
+                AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red);
                 MyMap.ZoomLevel = (int)slider.Value;
             }
             catch (Exception e)
@@ -198,8 +196,8 @@ namespace Geolocatie
                 Fill = new SolidColorBrush(c),
                 Stroke = new SolidColorBrush(Colors.White),
                 StrokeThickness = 1,
-                Width = 40,
-                Height = 40,
+                Width = 20,
+                Height = 20,
             };
 
             pin.Tapped += pin_Tapped;
@@ -215,8 +213,7 @@ namespace Geolocatie
 
         private void AppBarToggleButton_Checked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            AddPushpin(MyMap.Center.Position.Latitude,
-            MyMap.Center.Position.Longitude, Colors.Blue);
+            AddPushpin(MyMap.Center.Position.Latitude, MyMap.Center.Position.Longitude, Colors.Blue);
         }
 
         private void AppBarToggleButton_Unchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
@@ -227,6 +224,7 @@ namespace Geolocatie
         private void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
             getLocation();
+
         }
 
         private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)

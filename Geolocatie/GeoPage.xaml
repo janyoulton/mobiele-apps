@@ -38,7 +38,9 @@
         <!--TODO: Content should be placed within the following grid-->
         <Grid Grid.Row="1" x:Name="ContentRoot" Margin="20,0,20,0">
             <!--<Button Name="GPS" Content="Get GPS location" Click="GPS_Click"/>-->
-            <TextBlock Name="geolocation" Text="Your location" FontSize="28"/>
+            <TextBlock Name="destination" Text="Destination" FontSize="28"/>
+            <TextBox Name="search" Margin="150,0,0,0"/>
+            
             <maps:MapControl x:Name="MyMap" MapServiceToken="" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,50,0,0"/>
             <Slider x:Name="slider" VerticalAlignment="Bottom" Margin="15,0" LargeChange="1" Maximum="20" Minimum="1" SmallChange="1" ValueChanged="slider_ValueChanged"/>
         </Grid>

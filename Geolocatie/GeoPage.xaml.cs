@@ -16,6 +16,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Popups;
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -123,6 +124,8 @@ namespace Geolocatie
 
                 //given by {{Icode|geoposition}}
                 geolocation.Text = "Coordinates location:" + latitude + ", " + longitude;
+
+
             }
 
 
@@ -135,5 +138,40 @@ namespace Geolocatie
             }
 
        }
-   }
+
+        private async void getLocation()
+        {
+            Geolocator gl = new Geolocator
+            {
+                DesiredAccuracy = PositionAccuracy.High
+                
+            };
+
+            try
+            {
+                Geoposition gp = await gl.GetGeopositionAsync(
+                    maximumAge: TimeSpan.FromMinutes(1),
+                    timeout: TimeSpan.FromSeconds(20));
+                
+                message("Lat: " + gp.Coordinate.Point.Position.Latitude + "\n Lon: " + gp.Coordinate.Point.Position.Longitude, "Coordinates");
+            }
+            catch (Exception e)
+            {
+                message(e.Message, "ERROR!");
+            }
+        }
+
+        private async void message(string body, string title)
+        {
+            var dlg = new MessageDialog(
+                    string.Format(body), title);
+
+            try
+            {
+                await dlg.ShowAsync();
+            }
+            catch (Exception) { }
+        }
+
+    }
 }

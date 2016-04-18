@@ -9,6 +9,12 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Icon="Target" Label="Get Location" Click="AppBarButton_Click"/>
+        </CommandBar>
+    </Page.BottomAppBar>
+
     <Grid x:Name="LayoutRoot">
 
         <Grid.ChildrenTransitions>
@@ -34,10 +40,10 @@
         </StackPanel>
 
         <!--TODO: Content should be placed within the following grid-->
-        <StackPanel Grid.Row="1" Margin="19,19,19,19">
+        <StackPanel Grid.Row="1" x:Name="ContentRoot" Margin="19,19,19,19">
             <Button Name="GPS" Content="Get GPS location" Click="GPS_Click"/>
             <TextBlock Name="geolocation" Text="Your location." FontSize="28"/>
-            <Maps:MapControl />
+            <maps:MapControl x:Name="MyMap" MapServiceToken="" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="10"/>
         </StackPanel>
        
 

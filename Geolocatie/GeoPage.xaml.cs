@@ -134,7 +134,8 @@ namespace Geolocatie
             //The second is that the user doesn't turned on the Location Services 
             catch (Exception ex)
             {
-               //error
+                //error
+                
             }
 
        }

@@ -12,6 +12,7 @@
     <Page.BottomAppBar>
         <CommandBar>
             <AppBarButton Icon="Target" Label=" Get Location " Click="AppBarButton_Click"></AppBarButton>
+            <AppBarToggleButton x:Name="PushPinToggle" Icon="MapPin" Label="Toggle Pushpin" Checked="AppBarToggleButton_Checked" IsChecked="False" Unchecked="AppBarToggleButton_Unchecked"/>
         </CommandBar>
     </Page.BottomAppBar>
 

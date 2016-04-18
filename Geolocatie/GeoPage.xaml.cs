@@ -17,6 +17,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Popups;
+using Windows.UI;
+using Windows.UI.Xaml.Shapes;
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -183,6 +185,43 @@ namespace Geolocatie
                 await dlg.ShowAsync();
             }
             catch (Exception) { }
+        }
+
+        public void AddPushpin(double lat, double lon, Color c)
+        {
+            BasicGeoposition location = new BasicGeoposition();
+            location.Latitude = lat;
+            location.Longitude = lon;
+
+            var pin = new Ellipse()
+            {
+                Fill = new SolidColorBrush(c),
+                Stroke = new SolidColorBrush(Colors.White),
+                StrokeThickness = 1,
+                Width = 40,
+                Height = 40,
+            };
+
+            pin.Tapped += pin_Tapped;
+
+            Windows.UI.Xaml.Controls.Maps.MapControl.SetLocation(pin, new Geopoint(location));
+            MyMap.Children.Add(pin);
+        }
+
+        void pin_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            message("This is your location.", "");
+        }
+
+        private void AppBarToggleButton_Checked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        {
+            AddPushpin(MyMap.Center.Position.Latitude,
+            MyMap.Center.Position.Longitude, Colors.Blue);
+        }
+
+        private void AppBarToggleButton_Unchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        {
+            MyMap.Children.Clear();
         }
 
         private void AppBarButton_Click(object sender, RoutedEventArgs e)

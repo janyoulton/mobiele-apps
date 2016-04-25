@@ -19,6 +19,8 @@ using Windows.UI.Xaml.Navigation;
 using Windows.UI.Popups;
 using Windows.UI;
 using Windows.UI.Xaml.Shapes;
+using Windows.Services.Maps;
+using Windows.UI.Xaml.Controls.Maps;
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -71,6 +73,10 @@ namespace Geolocatie
         /// session.  The state will be null the first time a page is visited.</param>
         private void NavigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
+            slider.Value = 8;
+            this.MyMap.Center = new Geopoint(new BasicGeoposition() { Latitude = 50.913498, Longitude = 5.344768 }); //bij starten centreren op Hasselt
+            MyMap.MapTapped += myMap_MapTapped;
+            
         }
 
         /// <summary>
@@ -112,48 +118,20 @@ namespace Geolocatie
 
         #endregion
 
-       // private async void GPS_Click(object sender, RoutedEventArgs e)
-       // {
-       //     Geolocator geolocator = new Geolocator();
-       //     geolocator.DesiredAccuracyInMeters = 50;
-            
-       //     try
-       //     {
-       //         Geoposition geoposition = await geolocator.GetGeopositionAsync(maximumAge: TimeSpan.FromMinutes(5), timeout: TimeSpan.FromSeconds(10));
-
-       //         string latitude = geoposition.Coordinate.Latitude.ToString("0.000");
-       //         string longitude = geoposition.Coordinate.Longitude.ToString("0.000");
-
-       //         //given by {{Icode|geoposition}}
-       //         geolocation.Text = "Coordinates location:" + latitude + ", " + longitude;
-
-       //     }
-
-       //     //If an error is catch 2 are the main causes: the first is that you forgot to include ID_CAP_LOCATION in your app manifest.  
-       //     //The second is that the user doesn't turned on the Location Services 
-       //     catch (Exception ex)
-       //     {
-       //         //error
-                 
-       //     }
-
-       //}
-
-        private void CenterMap(double lat, double lon)
-        {
-            MyMap.Center = new Geopoint(new BasicGeoposition()
-            {
-                Latitude = lat,
-                Longitude = lon
-            });
-        }
+        //private void CenterMap(double lat, double lon)
+        //{
+        //    MyMap.Center = new Geopoint(new BasicGeoposition()
+        //    {
+        //        Latitude = lat,
+        //        Longitude = lon
+        //    });
+        //}
 
         private async void getLocation()
         {
             Geolocator gl = new Geolocator
             {
                 DesiredAccuracy = PositionAccuracy.High
-                
             };
 
             try
@@ -161,16 +139,18 @@ namespace Geolocatie
                 Geoposition gp = await gl.GetGeopositionAsync(
                     maximumAge: TimeSpan.FromMinutes(1),
                     timeout: TimeSpan.FromSeconds(20));
-                
-                //message("Latitude: " + gp.Coordinate.Point.Position.Latitude + "\nLongitude: " + gp.Coordinate.Point.Position.Longitude, "Coordinates");
-                CenterMap(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude);
+
+                MyMap.Center = gp.Coordinate.Point;
                 AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red);
                 MyMap.ZoomLevel = (int)slider.Value;
+
             }
             catch (Exception e)
             {
                 message(e.Message, "ERROR!");
             }
+
+            
         }
 
         private async void message(string body, string title)
@@ -206,11 +186,37 @@ namespace Geolocatie
             MyMap.Children.Add(pin);
         }
 
+        public void ziekenhuisLocaties()
+        {
+            BasicGeoposition jessazh = new BasicGeoposition();
+            jessazh.Latitude = 50.913498;
+            jessazh.Longitude = 5.344768;
+
+            BasicGeoposition AZVesalius = new BasicGeoposition();
+            AZVesalius.Latitude = 50.871752;
+            AZVesalius.Longitude = 5.512873;
+
+            //Distance(jessazh, AZVesalius, DistanceType.Kilometers);
+        }
+
+        private async void myMap_MapTapped(MapControl sender,MapInputEventArgs args)
+        {
+            //adres verkrijgen van getapte locatie
+            MapLocationFinderResult result = await MapLocationFinder.FindLocationsAtAsync(args.Location);
+            if (result.Status == MapLocationFinderStatus.Success)
+            {
+                if (result.Locations.Count > 0)
+                {
+                    string display = result.Locations[0].Address.StreetNumber + " " + result.Locations[0].Address.Street;
+                    search.Text = display;
+                }
+            }
+        }
+
         void pin_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             message("This is your location.", "");
         }
-
         private void AppBarToggleButton_Checked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
             AddPushpin(MyMap.Center.Position.Latitude, MyMap.Center.Position.Longitude, Colors.Blue);
@@ -223,14 +229,40 @@ namespace Geolocatie
 
         private void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
+
+            // eigen locatie bepalen
             getLocation();
 
-        }
+            //ziekenhuizen vlaanderen map objecten
+            ziekenhuisLocaties();
 
+            
+        }
         private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             if (slider != null)
                 MyMap.ZoomLevel = (int)slider.Value;
+        }
+        public double Distance(Position pos1, Position pos2, DistanceType type)
+        {
+            double R = (type == DistanceType.Miles) ? 3960 : 6371;
+            double dLat = this.toRadian(pos2.Latitude - pos1.Latitude);
+            double dLon = this.toRadian(pos2.Longitude - pos1.Longitude);
+            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(this.toRadian(pos1.Latitude)) * Math.Cos(this.toRadian(pos2.Latitude)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
+            double d = R * c;
+
+            return d;
+        }
+        private double toRadian(double val)
+        {
+            return (Math.PI / 180) * val;
+        }
+        public enum DistanceType { Miles, Kilometers };
+        public struct Position
+        {
+            public double Latitude;
+            public double Longitude;
         }
     }
 }

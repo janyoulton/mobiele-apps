@@ -21,6 +21,7 @@ using Windows.UI;
 using Windows.UI.Xaml.Shapes;
 using Windows.Services.Maps;
 using Windows.UI.Xaml.Controls.Maps;
+using System.Threading.Tasks;
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -33,6 +34,7 @@ namespace Geolocatie
     {
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
+
 
         public GeoPage()
         {
@@ -117,17 +119,8 @@ namespace Geolocatie
         }
 
         #endregion
-
-        //private void CenterMap(double lat, double lon)
-        //{
-        //    MyMap.Center = new Geopoint(new BasicGeoposition()
-        //    {
-        //        Latitude = lat,
-        //        Longitude = lon
-        //    });
-        //}
-
-        private async void getLocation()
+        //METHODES zelf geschreven
+        private async Task<Geoposition> getLocation()
         {
             Geolocator gl = new Geolocator
             {
@@ -141,18 +134,137 @@ namespace Geolocatie
                     timeout: TimeSpan.FromSeconds(20));
 
                 MyMap.Center = gp.Coordinate.Point;
-                AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red);
+                AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red, "eigen");
                 MyMap.ZoomLevel = (int)slider.Value;
+
+
+                var result = await MapLocationFinder.FindLocationsAtAsync(MyMap.Center);
+
+                // Get the address
+                if (result.Status == MapLocationFinderStatus.Success)
+                {
+                    string address = result.Locations[0].Address.StreetNumber + result.Locations[0].Address.Street;
+                    eigenLocatie.Text = address;
+                }
+                else
+                {
+                    message("plaatsnaam niet gevonden!","error");
+                }
+
+                return gp;
 
             }
             catch (Exception e)
             {
                 message(e.Message, "ERROR!");
+                return null;
             }
 
             
         }
 
+        private async void ziekenhuisLocaties()
+        {
+            BasicGeoposition jessazh = new BasicGeoposition();
+            jessazh.Latitude = 50.913498;
+            jessazh.Longitude = 5.344768;
+            Geopoint jessazhLocatie = new Geopoint(jessazh);
+            AddPushpin(jessazh.Latitude, jessazh.Longitude, Colors.Blue, "zh");
+
+            BasicGeoposition AZVesalius = new BasicGeoposition();
+            AZVesalius.Latitude = 50.871752;
+            AZVesalius.Longitude = 5.512873;
+            Geopoint AZVLocatie = new Geopoint(AZVesalius);
+            AddPushpin(AZVesalius.Latitude, AZVesalius.Longitude, Colors.Blue, "zh");
+
+            Geoposition mijnLocatie = await getLocation();
+            BasicGeoposition mijnLocatieBasic = new BasicGeoposition();
+            mijnLocatieBasic.Longitude = mijnLocatie.Coordinate.Point.Position.Longitude;
+            mijnLocatieBasic.Latitude = mijnLocatie.Coordinate.Point.Position.Latitude;
+            Geopoint mijnLocatiePoint = new Geopoint(mijnLocatieBasic);
+            
+
+            MapRouteFinderResult routeResult =
+                await MapRouteFinder.GetDrivingRouteAsync(
+                    jessazhLocatie,
+                    mijnLocatiePoint,
+                    MapRouteOptimization.Time,
+                    MapRouteRestrictions.None,
+                    290);
+
+            if (routeResult.Status == MapRouteFinderStatus.Success)
+            {
+                // Use the route to initialize a MapRouteView.
+                MapRouteView viewOfRoute = new MapRouteView(routeResult.Route);
+                viewOfRoute.RouteColor = Colors.Blue;
+                viewOfRoute.OutlineColor = Colors.Blue;
+                // Add the new MapRouteView to the Routes collection
+                // of the MapControl.
+                MyMap.Routes.Add(viewOfRoute);
+                // Fit the MapControl to the route.
+                await MyMap.TrySetViewBoundsAsync(
+                  routeResult.Route.BoundingBox,
+                  null,
+                  Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
+            }
+
+            //DIT GEDEELTE OP APARTE PAGINA!!!
+
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "Total estimated time (minutes) = "
+            //    + routeResult.Route.EstimatedDuration.TotalMinutes.ToString("F1")
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "Total length (kilometers) = "
+            //    + (routeResult.Route.LengthInMeters / 1000).ToString("F1")
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //// Display the directions.
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "DIRECTIONS"
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //// Loop through the legs and maneuvers.
+            //int legCount = 0;
+            //foreach (MapRouteLeg leg in routeResult.Route.Legs)
+            //{
+            //    foreach (MapRouteManeuver maneuver in leg.Maneuvers)
+            //    {
+            //        tbTurnByTurn.Inlines.Add(new Run()
+            //        {
+            //            Text = maneuver.InstructionText
+            //        });
+            //        tbTurnByTurn.Inlines.Add(new LineBreak());
+            //    }
+            //}
+
+
+
+            //Distance(jessazh, AZVesalius, DistanceType.Kilometers);
+        }
+
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        {
+            //alle vorige pinnen verwijderen
+            MyMap.Children.Clear();
+
+            //ziekenhuizen limburg
+            ziekenhuisLocaties();
+        }
+
+        private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (slider != null)
+                MyMap.ZoomLevel = (int)slider.Value;
+        }
+
+
+
+        //METHODES gevonden op internet
         private async void message(string body, string title)
         {
             var dlg = new MessageDialog(
@@ -165,7 +277,7 @@ namespace Geolocatie
             catch (Exception) { }
         }
 
-        public void AddPushpin(double lat, double lon, Color c)
+        public void AddPushpin(double lat, double lon, Color c, string type)
         {
             BasicGeoposition location = new BasicGeoposition();
             location.Latitude = lat;
@@ -180,23 +292,17 @@ namespace Geolocatie
                 Height = 20,
             };
 
-            pin.Tapped += pin_Tapped;
-
+            if (type == "zh")
+            {
+                pin.Tapped += pin_Tapped_Zh;
+            }
+            if (type == "eigen")
+            {
+                pin.Tapped += pin_Tapped_Eigen;
+            }
+           
             Windows.UI.Xaml.Controls.Maps.MapControl.SetLocation(pin, new Geopoint(location));
             MyMap.Children.Add(pin);
-        }
-
-        public void ziekenhuisLocaties()
-        {
-            BasicGeoposition jessazh = new BasicGeoposition();
-            jessazh.Latitude = 50.913498;
-            jessazh.Longitude = 5.344768;
-
-            BasicGeoposition AZVesalius = new BasicGeoposition();
-            AZVesalius.Latitude = 50.871752;
-            AZVesalius.Longitude = 5.512873;
-
-            //Distance(jessazh, AZVesalius, DistanceType.Kilometers);
         }
 
         private async void myMap_MapTapped(MapControl sender,MapInputEventArgs args)
@@ -207,62 +313,41 @@ namespace Geolocatie
             {
                 if (result.Locations.Count > 0)
                 {
-                    string display = result.Locations[0].Address.StreetNumber + " " + result.Locations[0].Address.Street;
-                    search.Text = display;
+                    string address = result.Locations[0].Address.StreetNumber + " " + result.Locations[0].Address.Street;
+                    eigenLocatie.Text = address;
                 }
             }
         }
 
-        void pin_Tapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        void pin_Tapped_Eigen(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            message("This is your location.", "");
+           message("Dit is uw huidige locatie.", "info");
         }
-        private void AppBarToggleButton_Checked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        void pin_Tapped_Zh(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            AddPushpin(MyMap.Center.Position.Latitude, MyMap.Center.Position.Longitude, Colors.Blue);
-        }
-
-        private void AppBarToggleButton_Unchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            MyMap.Children.Clear();
+            message("Dit is een ziekenhuis.", "info");
         }
 
-        private void AppBarButton_Click(object sender, RoutedEventArgs e)
-        {
+        //public double Distance(Position pos1, Position pos2, DistanceType type)
+        //{
+        //    double R = (type == DistanceType.Miles) ? 3960 : 6371;
+        //    double dLat = this.toRadian(pos2.Latitude - pos1.Latitude);
+        //    double dLon = this.toRadian(pos2.Longitude - pos1.Longitude);
+        //    double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(this.toRadian(pos1.Latitude)) * Math.Cos(this.toRadian(pos2.Latitude)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        //    double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
+        //    double d = R * c;
 
-            // eigen locatie bepalen
-            getLocation();
-
-            //ziekenhuizen vlaanderen map objecten
-            ziekenhuisLocaties();
-
-            
-        }
-        private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-        {
-            if (slider != null)
-                MyMap.ZoomLevel = (int)slider.Value;
-        }
-        public double Distance(Position pos1, Position pos2, DistanceType type)
-        {
-            double R = (type == DistanceType.Miles) ? 3960 : 6371;
-            double dLat = this.toRadian(pos2.Latitude - pos1.Latitude);
-            double dLon = this.toRadian(pos2.Longitude - pos1.Longitude);
-            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(this.toRadian(pos1.Latitude)) * Math.Cos(this.toRadian(pos2.Latitude)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-            double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
-            double d = R * c;
-
-            return d;
-        }
-        private double toRadian(double val)
-        {
-            return (Math.PI / 180) * val;
-        }
-        public enum DistanceType { Miles, Kilometers };
-        public struct Position
-        {
-            public double Latitude;
-            public double Longitude;
-        }
+        //    return d;
+        //}
+        //private double toRadian(double val)
+        //{
+        //    return (Math.PI / 180) * val;
+        //}
+        //public enum DistanceType { Miles, Kilometers };
+        //public struct Position
+        //{
+        //    public double Latitude;
+        //    public double Longitude;
+        //}
     }
 }

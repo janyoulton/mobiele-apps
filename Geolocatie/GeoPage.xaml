@@ -12,7 +12,6 @@
     <Page.BottomAppBar>
         <CommandBar>
             <AppBarButton Icon="Target" Label=" Get Location " Click="AppBarButton_Click"></AppBarButton>
-            <AppBarToggleButton x:Name="PushPinToggle" Icon="MapPin" Label="Toggle Pushpin" Checked="AppBarToggleButton_Checked" IsChecked="False" Unchecked="AppBarToggleButton_Unchecked"/>
         </CommandBar>
     </Page.BottomAppBar>
 
@@ -35,16 +34,27 @@
             <TextBlock Text="Geolocation" Margin="10,0,0,20" Style="{ThemeResource HeaderTextBlockStyle}" CharacterSpacing="{ThemeResource PivotHeaderItemCharacterSpacing}"/>
         </StackPanel>
 
+
         <!--TODO: Content should be placed within the following grid-->
         <Grid Grid.Row="1" x:Name="ContentRoot" Margin="20,0,20,0">
-            <!--<Button Name="GPS" Content="Get GPS location" Click="GPS_Click"/>-->
-            <TextBlock Name="destination" Text="Destination" FontSize="28"/>
-            <TextBox Name="search" Margin="150,0,0,0"/>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Name="locatieLabel" Text="Locatie :" FontSize="28"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" Name="eigenLocatie" Text=" " FontSize="28"/>
             
-            <maps:MapControl x:Name="MyMap" MapServiceToken="" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,50,0,0"/>
-            <Slider x:Name="slider" VerticalAlignment="Bottom" Margin="15,0" LargeChange="1" Maximum="20" Minimum="1" SmallChange="1" ValueChanged="slider_ValueChanged"/>
+            <maps:MapControl Grid.Row="1" Grid.ColumnSpan="2" x:Name="MyMap" MapServiceToken="" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,50,0,0"/>
+            <Slider Grid.Row="1" Grid.ColumnSpan="2" x:Name="slider" VerticalAlignment="Bottom" Margin="15,0" LargeChange="1" Maximum="20" Minimum="1" SmallChange="1" ValueChanged="slider_ValueChanged"/>
         </Grid>
-       
+        
+        
 
     </Grid>
 </Page>

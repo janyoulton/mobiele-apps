@@ -75,6 +75,7 @@ namespace Geolocatie
         /// session.  The state will be null the first time a page is visited.</param>
         private void NavigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
+            MapService.ServiceToken = "qZO7GwUqKeWcjJiEOva1qA​";
             slider.Value = 8;
             this.MyMap.Center = new Geopoint(new BasicGeoposition() { Latitude = 50.913498, Longitude = 5.344768 }); //bij starten centreren op Hasselt
             MyMap.MapTapped += myMap_MapTapped;
@@ -166,8 +167,8 @@ namespace Geolocatie
         private async void ziekenhuisLocaties()
         {
             BasicGeoposition jessazh = new BasicGeoposition();
-            jessazh.Latitude = 50.913498;
-            jessazh.Longitude = 5.344768;
+            jessazh.Latitude = 50.9323;//51.1971; //50.913498
+            jessazh.Longitude = 5.3024;//4.5854; // 5.344768
             Geopoint jessazhLocatie = new Geopoint(jessazh);
             AddPushpin(jessazh.Latitude, jessazh.Longitude, Colors.Blue, "zh");
 
@@ -177,35 +178,41 @@ namespace Geolocatie
             Geopoint AZVLocatie = new Geopoint(AZVesalius);
             AddPushpin(AZVesalius.Latitude, AZVesalius.Longitude, Colors.Blue, "zh");
 
+
+
             Geoposition mijnLocatie = await getLocation();
             BasicGeoposition mijnLocatieBasic = new BasicGeoposition();
             mijnLocatieBasic.Longitude = mijnLocatie.Coordinate.Point.Position.Longitude;
             mijnLocatieBasic.Latitude = mijnLocatie.Coordinate.Point.Position.Latitude;
             Geopoint mijnLocatiePoint = new Geopoint(mijnLocatieBasic);
             
-
             MapRouteFinderResult routeResult =
                 await MapRouteFinder.GetDrivingRouteAsync(
                     jessazhLocatie,
                     mijnLocatiePoint,
                     MapRouteOptimization.Time,
-                    MapRouteRestrictions.None,
-                    290);
+                    MapRouteRestrictions.None);
 
-            if (routeResult.Status == MapRouteFinderStatus.Success)
+            try {
+                 if (routeResult.Status == MapRouteFinderStatus.Success)
+                {
+                    // Use the route to initialize a MapRouteView.
+                    MapRouteView viewOfRoute = new MapRouteView(routeResult.Route);
+                    viewOfRoute.RouteColor = Colors.Blue;
+                    viewOfRoute.OutlineColor = Colors.Blue;
+                    // Add the new MapRouteView to the Routes collection
+                    // of the MapControl.
+                    MyMap.Routes.Add(viewOfRoute);
+                    // Fit the MapControl to the route.
+                    await MyMap.TrySetViewBoundsAsync(
+                    routeResult.Route.BoundingBox,
+                    null,
+                    Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
+                }
+            }
+            catch (Exception e)
             {
-                // Use the route to initialize a MapRouteView.
-                MapRouteView viewOfRoute = new MapRouteView(routeResult.Route);
-                viewOfRoute.RouteColor = Colors.Blue;
-                viewOfRoute.OutlineColor = Colors.Blue;
-                // Add the new MapRouteView to the Routes collection
-                // of the MapControl.
-                MyMap.Routes.Add(viewOfRoute);
-                // Fit the MapControl to the route.
-                await MyMap.TrySetViewBoundsAsync(
-                  routeResult.Route.BoundingBox,
-                  null,
-                  Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
+                message(e.Message, "ERROR!");
             }
 
             //DIT GEDEELTE OP APARTE PAGINA!!!
@@ -247,13 +254,23 @@ namespace Geolocatie
             //Distance(jessazh, AZVesalius, DistanceType.Kilometers);
         }
 
-        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)//Locatie
         {
             //alle vorige pinnen verwijderen
             MyMap.Children.Clear();
 
             //ziekenhuizen limburg
             ziekenhuisLocaties();
+        }
+
+        private void AppBarButton_Click_1(object sender, RoutedEventArgs e)//Beschrijving
+        {
+
+        }
+
+        private void AppBarButton_Click_2(object sender, RoutedEventArgs e)//Route
+        {
+
         }
 
         private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)

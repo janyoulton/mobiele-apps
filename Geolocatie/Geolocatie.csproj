@@ -80,6 +80,10 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <Page Include="DescriptionPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="GeoPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -93,6 +97,9 @@
     <Compile Include="Common\ObservableDictionary.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\SuspensionManager.cs" />
+    <Compile Include="DescriptionPage.xaml.cs">
+      <DependentUpon>DescriptionPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="GeoPage.xaml.cs">
       <DependentUpon>GeoPage.xaml</DependentUpon>
     </Compile>

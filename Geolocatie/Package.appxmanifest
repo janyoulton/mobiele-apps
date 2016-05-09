@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
   <Identity Name="f4b4db54-750f-4460-b224-3f4cf63e45e8" Publisher="CN=r0465607" Version="1.0.0.0" />
-  <mp:PhoneIdentity PhoneProductId="f4b4db54-750f-4460-b224-3f4cf63e45e8" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <mp:PhoneIdentity PhoneProductId="56739682-0940-4a92-ae1b-fddc20c2bf5e" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>Geolocatie</DisplayName>
     <PublisherDisplayName>r0465607</PublisherDisplayName>

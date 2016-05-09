@@ -11,7 +11,9 @@
 
     <Page.BottomAppBar>
         <CommandBar>
-            <AppBarButton Icon="Target" Label=" Get Location " Click="AppBarButton_Click"></AppBarButton>
+            <AppBarButton Icon="Target" Label="Locatie" Click="AppBarButton_Click"></AppBarButton>
+            <AppBarButton Icon="Directions" Label="Route" Click="AppBarButton_Click_2"></AppBarButton>
+            <AppBarButton Icon="Bookmarks"  Label="Beschrijving"  Click="AppBarButton_Click_1"></AppBarButton>
         </CommandBar>
     </Page.BottomAppBar>
 
@@ -30,8 +32,8 @@
 
         <!-- Title Panel -->
         <StackPanel Grid.Row="0" x:Name="ContentTitle" Margin="20,0,0,0">
-            <TextBlock Text="GPS" Style="{ThemeResource TitleTextBlockStyle}"/>
-            <TextBlock Text="Geolocation" Margin="10,0,0,20" Style="{ThemeResource HeaderTextBlockStyle}" CharacterSpacing="{ThemeResource PivotHeaderItemCharacterSpacing}"/>
+            <TextBlock Text="Ziekenhuizen in Limburg" Style="{ThemeResource TitleTextBlockStyle}"/>
+            <TextBlock Text="Spoedafdeling" Margin="10,0,0,20" Style="{ThemeResource HeaderTextBlockStyle}" CharacterSpacing="{ThemeResource PivotHeaderItemCharacterSpacing}"/>
         </StackPanel>
 
 
@@ -47,10 +49,10 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Name="locatieLabel" Text="Locatie :" FontSize="28"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Name="locatieLabel" Text="Locatie : " FontSize="28"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Name="eigenLocatie" Text=" " FontSize="28"/>
-            
-            <maps:MapControl Grid.Row="1" Grid.ColumnSpan="2" x:Name="MyMap" MapServiceToken="" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,50,0,0"/>
+
+            <maps:MapControl Grid.Row="1" Grid.ColumnSpan="2" x:Name="MyMap" MapServiceToken="qZO7GwUqKeWcjJiEOva1qA​" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,50,0,0"/>
             <Slider Grid.Row="1" Grid.ColumnSpan="2" x:Name="slider" VerticalAlignment="Bottom" Margin="15,0" LargeChange="1" Maximum="20" Minimum="1" SmallChange="1" ValueChanged="slider_ValueChanged"/>
         </Grid>
         

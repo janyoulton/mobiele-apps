@@ -11,7 +11,7 @@
 
     <Page.BottomAppBar>
         <CommandBar>
-            <AppBarButton Icon="Map" Label="Map"></AppBarButton>
+            <AppBarButton Icon="Map" Label="Map" Click="AppBarButton_Click"></AppBarButton>
         </CommandBar>
     </Page.BottomAppBar>
     
@@ -35,7 +35,7 @@
 
         <!--TODO: Content should be placed within the following grid-->
         <Grid Grid.Row="1" x:Name="ContentRoot" Margin="19,9.5,19,0">
-            <TextBox Name="tbTurnByTurn" Margin="0,10,0,0"></TextBox>
+            <TextBox Name="tbTurnByTurn" Height="Auto" Margin="0,10,0,0"></TextBox>
         </Grid>
     </Grid>
 </Page>

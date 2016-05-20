@@ -12,6 +12,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
@@ -67,6 +68,37 @@ namespace Geolocatie
         /// session.  The state will be null the first time a page is visited.</param>
         private void NavigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "Total estimated time (minutes) = "
+            //    + routeResult.Route.EstimatedDuration.TotalMinutes.ToString("F1")
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "Total length (kilometers) = "
+            //    + (routeResult.Route.LengthInMeters / 1000).ToString("F1")
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //// Display the directions.
+            //tbTurnByTurn.Inlines.Add(new Run()
+            //{
+            //    Text = "DIRECTIONS"
+            //});
+            //tbTurnByTurn.Inlines.Add(new LineBreak());
+            //// Loop through the legs and maneuvers.
+            //int legCount = 0;
+            //foreach (MapRouteLeg leg in routeResult.Route.Legs)
+            //{
+            //    foreach (MapRouteManeuver maneuver in leg.Maneuvers)
+            //    {
+            //        tbTurnByTurn.Inlines.Add(new Run()
+            //        {
+            //            Text = maneuver.InstructionText
+            //        });
+            //        tbTurnByTurn.Inlines.Add(new LineBreak());
+            //    }
+            //}
         }
 
         /// <summary>
@@ -107,5 +139,10 @@ namespace Geolocatie
         }
 
         #endregion
+
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)//Map
+        {
+            this.Frame.Navigate(typeof(GeoPage));
+        }
     }
 }

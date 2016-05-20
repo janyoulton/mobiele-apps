@@ -22,6 +22,7 @@ using Windows.UI.Xaml.Shapes;
 using Windows.Services.Maps;
 using Windows.UI.Xaml.Controls.Maps;
 using System.Threading.Tasks;
+using Windows.Web.Http;
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -61,6 +62,8 @@ namespace Geolocatie
         {
             get { return this.defaultViewModel; }
         }
+
+        public object JsonConvert { get; private set; }
 
         /// <summary>
         /// Populates the page with content passed during navigation.  Any saved state is also
@@ -125,14 +128,15 @@ namespace Geolocatie
         {
             Geolocator gl = new Geolocator
             {
-                DesiredAccuracy = PositionAccuracy.High
+                DesiredAccuracy = PositionAccuracy.High,
+                MovementThreshold = 10
+
             };
 
             try
             {
-                Geoposition gp = await gl.GetGeopositionAsync(
-                    maximumAge: TimeSpan.FromMinutes(1),
-                    timeout: TimeSpan.FromSeconds(20));
+                Geoposition gp = await gl.GetGeopositionAsync();
+                
 
                 MyMap.Center = gp.Coordinate.Point;
                 AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red, "eigen");
@@ -159,42 +163,68 @@ namespace Geolocatie
             {
                 message(e.Message, "ERROR!");
                 return null;
-            }
-
-            
+            }            
         }
-
         private async void ziekenhuisLocaties()
         {
-            BasicGeoposition jessazh = new BasicGeoposition();
-            jessazh.Latitude = 50.9323;//51.1971; //50.913498
-            jessazh.Longitude = 5.3024;//4.5854; // 5.344768
+            MapService.ServiceToken = "qZO7GwUqKeWcjJiEOva1qA";
+
+            Ziekenhuis zh1 = new Ziekenhuis();
+            zh1.Naam = "JessaZH";
+            BasicGeoposition jessazh = new BasicGeoposition(); //Hasselt
+            jessazh.Latitude = 50.9317;
+            jessazh.Longitude = 5.3605;
             Geopoint jessazhLocatie = new Geopoint(jessazh);
             AddPushpin(jessazh.Latitude, jessazh.Longitude, Colors.Blue, "zh");
+            zh1.Positie = jessazh;
 
-            BasicGeoposition AZVesalius = new BasicGeoposition();
+            Ziekenhuis zh2 = new Ziekenhuis();
+            zh2.Naam = "AZVesalius";
+            BasicGeoposition AZVesalius = new BasicGeoposition(); //Bilzen
             AZVesalius.Latitude = 50.871752;
             AZVesalius.Longitude = 5.512873;
             Geopoint AZVLocatie = new Geopoint(AZVesalius);
             AddPushpin(AZVesalius.Latitude, AZVesalius.Longitude, Colors.Blue, "zh");
-
-
+            zh2.Positie = AZVesalius;
 
             Geoposition mijnLocatie = await getLocation();
             BasicGeoposition mijnLocatieBasic = new BasicGeoposition();
             mijnLocatieBasic.Longitude = mijnLocatie.Coordinate.Point.Position.Longitude;
             mijnLocatieBasic.Latitude = mijnLocatie.Coordinate.Point.Position.Latitude;
             Geopoint mijnLocatiePoint = new Geopoint(mijnLocatieBasic);
+
+            //Geopoint dichtsteZiekenhuis = await Distance(jessazh, AZVesalius, mijnLocatiePoint);
+            //MapLocationFinderResult result = await MapLocationFinder.FindLocationsAsync("Ziekenhuis", mijnLocatiePoint); //werkt enkel voor straatnamen
+            //Geopoint point = result.Locations.FirstOrDefault().Point; //point meegeven bij GetDrivingRouteAsync()
+
+            List<Ziekenhuis> lijst = new List<Ziekenhuis>();
+            lijst.Add(zh1);
+            lijst.Add(zh2);
             
+            double kleinsteAfstand = 50000; // grote startwaarde
+
+            foreach (var ziekenhuis in lijst)
+            {
+                double afstand = Distance(mijnLocatieBasic.Latitude, mijnLocatieBasic.Longitude, ziekenhuis.Positie.Latitude, ziekenhuis.Positie.Longitude);
+
+                if (afstand < kleinsteAfstand)
+                {
+                    kleinsteAfstand = afstand;
+                }
+                BasicGeoposition nearestHospital = new BasicGeoposition();
+                nearestHospital.Longitude = ziekenhuis.Positie.Longitude; // waardes van foreach invullen
+                nearestHospital.Latitude = ziekenhuis.Positie.Latitude;
+                Geopoint nearestHospitalPoint = new Geopoint(nearestHospital);
+
+            }
+
             MapRouteFinderResult routeResult =
                 await MapRouteFinder.GetDrivingRouteAsync(
-                    jessazhLocatie,
-                    mijnLocatiePoint,
-                    MapRouteOptimization.Time,
-                    MapRouteRestrictions.None);
-
+                    nearestHopitalPoint,
+                    mijnLocatiePoint);
+            
             try {
-                 if (routeResult.Status == MapRouteFinderStatus.Success)
+                if (routeResult.Status == MapRouteFinderStatus.Success)
                 {
                     // Use the route to initialize a MapRouteView.
                     MapRouteView viewOfRoute = new MapRouteView(routeResult.Route);
@@ -202,56 +232,19 @@ namespace Geolocatie
                     viewOfRoute.OutlineColor = Colors.Blue;
                     // Add the new MapRouteView to the Routes collection
                     // of the MapControl.
+                    MyMap.Routes.Clear();
                     MyMap.Routes.Add(viewOfRoute);
                     // Fit the MapControl to the route.
                     await MyMap.TrySetViewBoundsAsync(
                     routeResult.Route.BoundingBox,
                     null,
                     Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
-                }
+                 }
             }
             catch (Exception e)
             {
                 message(e.Message, "ERROR!");
             }
-
-            //DIT GEDEELTE OP APARTE PAGINA!!!
-
-            //tbTurnByTurn.Inlines.Add(new Run()
-            //{
-            //    Text = "Total estimated time (minutes) = "
-            //    + routeResult.Route.EstimatedDuration.TotalMinutes.ToString("F1")
-            //});
-            //tbTurnByTurn.Inlines.Add(new LineBreak());
-            //tbTurnByTurn.Inlines.Add(new Run()
-            //{
-            //    Text = "Total length (kilometers) = "
-            //    + (routeResult.Route.LengthInMeters / 1000).ToString("F1")
-            //});
-            //tbTurnByTurn.Inlines.Add(new LineBreak());
-            //// Display the directions.
-            //tbTurnByTurn.Inlines.Add(new Run()
-            //{
-            //    Text = "DIRECTIONS"
-            //});
-            //tbTurnByTurn.Inlines.Add(new LineBreak());
-            //// Loop through the legs and maneuvers.
-            //int legCount = 0;
-            //foreach (MapRouteLeg leg in routeResult.Route.Legs)
-            //{
-            //    foreach (MapRouteManeuver maneuver in leg.Maneuvers)
-            //    {
-            //        tbTurnByTurn.Inlines.Add(new Run()
-            //        {
-            //            Text = maneuver.InstructionText
-            //        });
-            //        tbTurnByTurn.Inlines.Add(new LineBreak());
-            //    }
-            //}
-
-
-
-            //Distance(jessazh, AZVesalius, DistanceType.Kilometers);
         }
 
         private void AppBarButton_Click(object sender, RoutedEventArgs e)//Locatie
@@ -265,12 +258,13 @@ namespace Geolocatie
 
         private void AppBarButton_Click_1(object sender, RoutedEventArgs e)//Beschrijving
         {
-
+            this.Frame.Navigate(typeof(DescriptionPage));
         }
 
         private void AppBarButton_Click_2(object sender, RoutedEventArgs e)//Route
         {
-
+            
+            
         }
 
         private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
@@ -282,6 +276,34 @@ namespace Geolocatie
 
 
         //METHODES gevonden op internet
+        public class RootObject
+        {
+            public List<object> html_attributions { get; set; }
+            public List<Result> results { get; set; }
+            public string status { get; set; }
+        }
+        public class Location
+        {
+            public double lat { get; set; }
+            public double lng { get; set; }
+        }
+        public class Geometry
+        {
+            public Location location { get; set; }
+        }
+        public class Result
+        {
+            public Geometry geometry { get; set; }
+            public string icon { get; set; }
+            public string id { get; set; }
+            public string name { get; set; }
+            public string place_id { get; set; }
+            public string reference { get; set; }
+            public string scope { get; set; }
+            public List<string> types { get; set; }
+            public string vicinity { get; set; }
+        }
+
         private async void message(string body, string title)
         {
             var dlg = new MessageDialog(
@@ -345,26 +367,22 @@ namespace Geolocatie
             message("Dit is een ziekenhuis.", "info");
         }
 
-        //public double Distance(Position pos1, Position pos2, DistanceType type)
-        //{
-        //    double R = (type == DistanceType.Miles) ? 3960 : 6371;
-        //    double dLat = this.toRadian(pos2.Latitude - pos1.Latitude);
-        //    double dLon = this.toRadian(pos2.Longitude - pos1.Longitude);
-        //    double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(this.toRadian(pos1.Latitude)) * Math.Cos(this.toRadian(pos2.Latitude)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        //    double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
-        //    double d = R * c;
+        public double Distance(double mijnLatitude, double mijnLongitude, double Latitude, double Longitude)
+        {
+            double R = 6371; //kilometers
+            double dLat = this.toRadian(Latitude - mijnLatitude);
+            double dLon = this.toRadian(Longitude - mijnLongitude);
+            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(this.toRadian(mijnLatitude)) * Math.Cos(this.toRadian(Latitude)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
+            double d = R * c;
+            return d;
+        } //Haversine methode
+        private double toRadian(double val)
+        {
+            return (Math.PI / 180) * val;
+        }
 
-        //    return d;
-        //}
-        //private double toRadian(double val)
-        //{
-        //    return (Math.PI / 180) * val;
-        //}
-        //public enum DistanceType { Miles, Kilometers };
-        //public struct Position
-        //{
-        //    public double Latitude;
-        //    public double Longitude;
-        //}
     }
 }

@@ -1,9 +1,11 @@
 ﻿using Geolocatie.Common;
+using Geolocatie.Classes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Newtonsoft.Json;
 using Windows.Devices.Geolocation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -22,7 +24,9 @@ using Windows.UI.Xaml.Shapes;
 using Windows.Services.Maps;
 using Windows.UI.Xaml.Controls.Maps;
 using System.Threading.Tasks;
-using Windows.Web.Http;
+using System.Net.Http;
+using Windows.Storage.Streams;
+
 
 // The Basic Page item template is documented at http://go.microsoft.com/fwlink/?LinkID=390556
 
@@ -36,6 +40,7 @@ namespace Geolocatie
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
 
+        MapRouteFinderResult routeResult;
 
         public GeoPage()
         {
@@ -44,6 +49,8 @@ namespace Geolocatie
             this.navigationHelper = new NavigationHelper(this);
             this.navigationHelper.LoadState += this.NavigationHelper_LoadState;
             this.navigationHelper.SaveState += this.NavigationHelper_SaveState;
+
+            locatie();
         }
 
         /// <summary>
@@ -63,8 +70,6 @@ namespace Geolocatie
             get { return this.defaultViewModel; }
         }
 
-        public object JsonConvert { get; private set; }
-
         /// <summary>
         /// Populates the page with content passed during navigation.  Any saved state is also
         /// provided when recreating a page from a prior session.
@@ -79,10 +84,7 @@ namespace Geolocatie
         private void NavigationHelper_LoadState(object sender, LoadStateEventArgs e)
         {
             MapService.ServiceToken = "qZO7GwUqKeWcjJiEOva1qA​";
-            slider.Value = 8;
-            this.MyMap.Center = new Geopoint(new BasicGeoposition() { Latitude = 50.913498, Longitude = 5.344768 }); //bij starten centreren op Hasselt
             MyMap.MapTapped += myMap_MapTapped;
-            
         }
 
         /// <summary>
@@ -123,7 +125,6 @@ namespace Geolocatie
         }
 
         #endregion
-        //METHODES zelf geschreven
         private async Task<Geoposition> getLocation()
         {
             Geolocator gl = new Geolocator
@@ -137,27 +138,7 @@ namespace Geolocatie
             {
                 Geoposition gp = await gl.GetGeopositionAsync();
                 
-
-                MyMap.Center = gp.Coordinate.Point;
-                AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, Colors.Red, "eigen");
-                MyMap.ZoomLevel = (int)slider.Value;
-
-
-                var result = await MapLocationFinder.FindLocationsAtAsync(MyMap.Center);
-
-                // Get the address
-                if (result.Status == MapLocationFinderStatus.Success)
-                {
-                    string address = result.Locations[0].Address.StreetNumber + result.Locations[0].Address.Street;
-                    eigenLocatie.Text = address;
-                }
-                else
-                {
-                    message("plaatsnaam niet gevonden!","error");
-                }
-
                 return gp;
-
             }
             catch (Exception e)
             {
@@ -165,65 +146,83 @@ namespace Geolocatie
                 return null;
             }            
         }
-        private async void ziekenhuisLocaties()
+
+        public async void locatie()
+        {
+            Geoposition gp = await getLocation();
+
+            MyMap.MapElements.Clear();
+            MyMap.Center = gp.Coordinate.Point;
+            AddPushpin(gp.Coordinate.Point.Position.Latitude, gp.Coordinate.Point.Position.Longitude, "eigen");
+            slider.Value = 13;
+            
+            var result = await MapLocationFinder.FindLocationsAtAsync(MyMap.Center);
+
+            eigenLocatie.Text = locatieTekst(result, MyMap);
+        }
+
+        private string locatieTekst(MapLocationFinderResult result, MapControl MyMap)//locatie in string formaat
+        {
+            if (result.Status == MapLocationFinderStatus.Success)
+            {
+                return "locatie : " + result.Locations[0].Address.Street + ", " + result.Locations[0].Address.StreetNumber + "\n "
+                    + result.Locations[0].Address.PostCode + " " + result.Locations[0].Address.Town;
+            }
+            else
+            {
+                return "plaats niet gevonden!";
+            }
+        }
+
+        private async void getZiekenhuizen()//route van huidige locatie naar dichtste ziekenhuis
         {
             MapService.ServiceToken = "qZO7GwUqKeWcjJiEOva1qA";
 
-            Ziekenhuis zh1 = new Ziekenhuis();
-            zh1.Naam = "JessaZH";
-            BasicGeoposition jessazh = new BasicGeoposition(); //Hasselt
-            jessazh.Latitude = 50.9317;
-            jessazh.Longitude = 5.3605;
-            Geopoint jessazhLocatie = new Geopoint(jessazh);
-            AddPushpin(jessazh.Latitude, jessazh.Longitude, Colors.Blue, "zh");
-            zh1.Positie = jessazh;
+            Geoposition gp = await getLocation();
+            BasicGeoposition gpBasis = new BasicGeoposition();
+            gpBasis.Longitude = gp.Coordinate.Point.Position.Longitude;
+            gpBasis.Latitude = gp.Coordinate.Point.Position.Latitude;
+            Geopoint gpPoint = new Geopoint(gpBasis);
 
-            Ziekenhuis zh2 = new Ziekenhuis();
-            zh2.Naam = "AZVesalius";
-            BasicGeoposition AZVesalius = new BasicGeoposition(); //Bilzen
-            AZVesalius.Latitude = 50.871752;
-            AZVesalius.Longitude = 5.512873;
-            Geopoint AZVLocatie = new Geopoint(AZVesalius);
-            AddPushpin(AZVesalius.Latitude, AZVesalius.Longitude, Colors.Blue, "zh");
-            zh2.Positie = AZVesalius;
+            string httpheader = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + gpBasis.Latitude + "," + gpBasis.Longitude + "&radius=30000&type=hospital&key=AIzaSyBVbK0OS14hDYy10rOAhX94BEOuV02HBXQ";
 
-            Geoposition mijnLocatie = await getLocation();
-            BasicGeoposition mijnLocatieBasic = new BasicGeoposition();
-            mijnLocatieBasic.Longitude = mijnLocatie.Coordinate.Point.Position.Longitude;
-            mijnLocatieBasic.Latitude = mijnLocatie.Coordinate.Point.Position.Latitude;
-            Geopoint mijnLocatiePoint = new Geopoint(mijnLocatieBasic);
-
-            //Geopoint dichtsteZiekenhuis = await Distance(jessazh, AZVesalius, mijnLocatiePoint);
-            //MapLocationFinderResult result = await MapLocationFinder.FindLocationsAsync("Ziekenhuis", mijnLocatiePoint); //werkt enkel voor straatnamen
-            //Geopoint point = result.Locations.FirstOrDefault().Point; //point meegeven bij GetDrivingRouteAsync()
-
-            List<Ziekenhuis> lijst = new List<Ziekenhuis>();
-            lijst.Add(zh1);
-            lijst.Add(zh2);
+            var client = new HttpClient();
+            var result = await client.GetStringAsync(httpheader);
+            GooglePlacesResponse gpr = (GooglePlacesResponse)JsonConvert.DeserializeObject<GooglePlacesResponse>(result);
             
-            double kleinsteAfstand = 50000; // grote startwaarde
+            int count = gpr.results.Length;
 
-            foreach (var ziekenhuis in lijst)
+            BasicGeoposition plaats = new BasicGeoposition();
+
+            BasicGeoposition nearestHospital = new BasicGeoposition();
+            Geopoint nearestHospitalPoint;
+
+            double dichtste = 30000;
+
+            if (gpr.status == "OK")
             {
-                double afstand = Distance(mijnLocatieBasic.Latitude, mijnLocatieBasic.Longitude, ziekenhuis.Positie.Latitude, ziekenhuis.Positie.Longitude);
-
-                if (afstand < kleinsteAfstand)
+                for (int j = 0; j < count; j++)
                 {
-                    kleinsteAfstand = afstand;
+                    string name = gpr.results[j].name;
+                    plaats.Latitude = gpr.results[j].geometry.location.lat;
+                    plaats.Longitude = gpr.results[j].geometry.location.lng;
+
+                    double afstand = Distance(gpBasis.Latitude, gpBasis.Longitude, plaats.Latitude, plaats.Longitude, 1);
+
+                    if (afstand < dichtste)
+                    {
+                        dichtste = afstand;
+
+                        nearestHospital.Longitude = gpr.results[j].geometry.location.lng;
+                        nearestHospital.Latitude = gpr.results[j].geometry.location.lat;
+                    }
                 }
-                BasicGeoposition nearestHospital = new BasicGeoposition();
-                nearestHospital.Longitude = ziekenhuis.Positie.Longitude; // waardes van foreach invullen
-                nearestHospital.Latitude = ziekenhuis.Positie.Latitude;
-                Geopoint nearestHospitalPoint = new Geopoint(nearestHospital);
+                nearestHospitalPoint = new Geopoint(nearestHospital);
+                AddPushpin(nearestHospital.Latitude, nearestHospital.Longitude, "zh");
+                AddPushpin(gpBasis.Latitude, gpBasis.Longitude, "eigen");
 
-            }
+                routeResult = await MapRouteFinder.GetDrivingRouteAsync(nearestHospitalPoint, gpPoint);
 
-            MapRouteFinderResult routeResult =
-                await MapRouteFinder.GetDrivingRouteAsync(
-                    nearestHopitalPoint,
-                    mijnLocatiePoint);
-            
-            try {
                 if (routeResult.Status == MapRouteFinderStatus.Success)
                 {
                     // Use the route to initialize a MapRouteView.
@@ -239,69 +238,27 @@ namespace Geolocatie
                     routeResult.Route.BoundingBox,
                     null,
                     Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
-                 }
-            }
-            catch (Exception e)
-            {
-                message(e.Message, "ERROR!");
+
+                }
+                else
+                {
+                    message("Je route kon niet berekend worden", "FOUTMELDING");
+                }
+
             }
         }
 
-        private void AppBarButton_Click(object sender, RoutedEventArgs e)//Locatie
+        private void AppBarButton_Click(object sender, RoutedEventArgs e)//Routeknop
         {
-            //alle vorige pinnen verwijderen
             MyMap.Children.Clear();
-
-            //ziekenhuizen limburg
-            ziekenhuisLocaties();
-        }
-
-        private void AppBarButton_Click_1(object sender, RoutedEventArgs e)//Beschrijving
-        {
-            this.Frame.Navigate(typeof(DescriptionPage));
-        }
-
-        private void AppBarButton_Click_2(object sender, RoutedEventArgs e)//Route
-        {
             
-            
+            getZiekenhuizen();
         }
 
         private void slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             if (slider != null)
                 MyMap.ZoomLevel = (int)slider.Value;
-        }
-
-
-
-        //METHODES gevonden op internet
-        public class RootObject
-        {
-            public List<object> html_attributions { get; set; }
-            public List<Result> results { get; set; }
-            public string status { get; set; }
-        }
-        public class Location
-        {
-            public double lat { get; set; }
-            public double lng { get; set; }
-        }
-        public class Geometry
-        {
-            public Location location { get; set; }
-        }
-        public class Result
-        {
-            public Geometry geometry { get; set; }
-            public string icon { get; set; }
-            public string id { get; set; }
-            public string name { get; set; }
-            public string place_id { get; set; }
-            public string reference { get; set; }
-            public string scope { get; set; }
-            public List<string> types { get; set; }
-            public string vicinity { get; set; }
         }
 
         private async void message(string body, string title)
@@ -316,7 +273,7 @@ namespace Geolocatie
             catch (Exception) { }
         }
 
-        public void AddPushpin(double lat, double lon, Color c, string type)
+        public void AddPushpin(double lat, double lon, string type)//marker objecten
         {
             BasicGeoposition location = new BasicGeoposition();
             location.Latitude = lat;
@@ -324,7 +281,6 @@ namespace Geolocatie
 
             var pin = new Ellipse()
             {
-                Fill = new SolidColorBrush(c),
                 Stroke = new SolidColorBrush(Colors.White),
                 StrokeThickness = 1,
                 Width = 20,
@@ -333,56 +289,49 @@ namespace Geolocatie
 
             if (type == "zh")
             {
+                pin.Fill = new SolidColorBrush(Colors.Blue);
                 pin.Tapped += pin_Tapped_Zh;
             }
             if (type == "eigen")
             {
+                pin.Fill = new SolidColorBrush(Colors.Red);
                 pin.Tapped += pin_Tapped_Eigen;
             }
-           
-            Windows.UI.Xaml.Controls.Maps.MapControl.SetLocation(pin, new Geopoint(location));
+            MapControl.SetLocation(pin, new Geopoint(location));
             MyMap.Children.Add(pin);
         }
-
-        private async void myMap_MapTapped(MapControl sender,MapInputEventArgs args)
+        
+        private async void myMap_MapTapped(MapControl sender,MapInputEventArgs args)//adres verkrijgen van getapte locatie
         {
-            //adres verkrijgen van getapte locatie
             MapLocationFinderResult result = await MapLocationFinder.FindLocationsAtAsync(args.Location);
-            if (result.Status == MapLocationFinderStatus.Success)
-            {
-                if (result.Locations.Count > 0)
-                {
-                    string address = result.Locations[0].Address.StreetNumber + " " + result.Locations[0].Address.Street;
-                    eigenLocatie.Text = address;
-                }
-            }
-        }
 
+            eigenLocatie.Text = locatieTekst(result, MyMap);
+        }
+        //message tekst
         void pin_Tapped_Eigen(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
            message("Dit is uw huidige locatie.", "info");
         }
         void pin_Tapped_Zh(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
-            message("Dit is een ziekenhuis.", "info");
+            message("Dichtste ziekenhuis.", "info");
         }
-
-        public double Distance(double mijnLatitude, double mijnLongitude, double Latitude, double Longitude)
+        //afstand tussen 2 plaatsen berekenen
+        public double Distance(double pos1Latitude, double pos1Longitude, double pos2Latitude, double pos2Longitude, int type)
         {
-            double R = 6371; //kilometers
-            double dLat = this.toRadian(Latitude - mijnLatitude);
-            double dLon = this.toRadian(Longitude - mijnLongitude);
+            double R = (type == 0) ? 3960 : 6371; //if type == 0 ? miles : kilometers;
+            double dLat = this.toRadian(pos2Latitude - pos1Latitude);
+            double dLon = this.toRadian(pos2Longitude - pos1Longitude);
             double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(this.toRadian(mijnLatitude)) * Math.Cos(this.toRadian(Latitude)) *
+                Math.Cos(this.toRadian(pos1Latitude)) * Math.Cos(this.toRadian(pos2Latitude)) *
                 Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
             double c = 2 * Math.Asin(Math.Min(1, Math.Sqrt(a)));
             double d = R * c;
             return d;
-        } //Haversine methode
+        }
         private double toRadian(double val)
         {
             return (Math.PI / 180) * val;
         }
-
     }
 }

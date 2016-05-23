@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Geolocatie.Classes.Geometry">
+    <Position X="1.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Classes\Geometry.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Geolocatie.Classes.GooglePlacesResponse">
+    <Position X="3.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAA=</HashCode>
+      <FileName>Classes\GooglePlacesResponse.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Geolocatie.Classes.Location">
+    <Position X="1.5" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Classes\Location.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Geolocatie.Classes.results">
+    <Position X="3.75" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAgAAAAAAAAAAAIAAEAAAAAQAAAAAAAAA=</HashCode>
+      <FileName>Classes\results.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

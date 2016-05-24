@@ -131,7 +131,6 @@ namespace Geolocatie
             {
                 DesiredAccuracy = PositionAccuracy.High,
                 MovementThreshold = 10
-
             };
 
             try
@@ -158,10 +157,10 @@ namespace Geolocatie
             
             var result = await MapLocationFinder.FindLocationsAtAsync(MyMap.Center);
 
-            eigenLocatie.Text = locatieTekst(result, MyMap);
+            eigenLocatie.Text = locatieTekst(result);
         }
 
-        private string locatieTekst(MapLocationFinderResult result, MapControl MyMap)//locatie in string formaat
+        private string locatieTekst(MapLocationFinderResult result)//locatie in string formaat
         {
             if (result.Status == MapLocationFinderStatus.Success)
             {
@@ -177,6 +176,8 @@ namespace Geolocatie
         private async void getZiekenhuizen()//route van huidige locatie naar dichtste ziekenhuis
         {
             MapService.ServiceToken = "qZO7GwUqKeWcjJiEOva1qA";
+
+            MyMap.MapElements.Clear();
 
             Geoposition gp = await getLocation();
             BasicGeoposition gpBasis = new BasicGeoposition();
@@ -218,6 +219,9 @@ namespace Geolocatie
                     }
                 }
                 nearestHospitalPoint = new Geopoint(nearestHospital);
+
+                var resultaat = await MapLocationFinder.FindLocationsAtAsync(nearestHospitalPoint);
+                eigenLocatie.Text = locatieTekst(resultaat);
                 AddPushpin(nearestHospital.Latitude, nearestHospital.Longitude, "zh");
                 AddPushpin(gpBasis.Latitude, gpBasis.Longitude, "eigen");
 
@@ -238,7 +242,7 @@ namespace Geolocatie
                     routeResult.Route.BoundingBox,
                     null,
                     Windows.UI.Xaml.Controls.Maps.MapAnimationKind.Bow);
-
+                    slider.Value = MyMap.ZoomLevel;
                 }
                 else
                 {
@@ -250,6 +254,7 @@ namespace Geolocatie
 
         private void AppBarButton_Click(object sender, RoutedEventArgs e)//Routeknop
         {
+            MyMap.Routes.Clear();
             MyMap.Children.Clear();
             
             getZiekenhuizen();
@@ -305,7 +310,7 @@ namespace Geolocatie
         {
             MapLocationFinderResult result = await MapLocationFinder.FindLocationsAtAsync(args.Location);
 
-            eigenLocatie.Text = locatieTekst(result, MyMap);
+            eigenLocatie.Text = locatieTekst(result);
         }
         //message tekst
         void pin_Tapped_Eigen(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)

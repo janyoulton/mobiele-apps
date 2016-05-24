@@ -185,7 +185,8 @@ namespace Geolocatie
             gpBasis.Latitude = gp.Coordinate.Point.Position.Latitude;
             Geopoint gpPoint = new Geopoint(gpBasis);
 
-            string httpheader = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + gpBasis.Latitude + "," + gpBasis.Longitude + "&radius=30000&type=hospital&key=AIzaSyBVbK0OS14hDYy10rOAhX94BEOuV02HBXQ";
+            string httpheader = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + gpBasis.Latitude + "," + gpBasis.Longitude 
+                + "&radius=30000&type=hospital&key=AIzaSyBVbK0OS14hDYy10rOAhX94BEOuV02HBXQ";
 
             var client = new HttpClient();
             var result = await client.GetStringAsync(httpheader);
@@ -214,8 +215,8 @@ namespace Geolocatie
                     {
                         dichtste = afstand;
 
-                        nearestHospital.Longitude = gpr.results[j].geometry.location.lng;
-                        nearestHospital.Latitude = gpr.results[j].geometry.location.lat;
+                        nearestHospital.Longitude = plaats.Longitude;
+                        nearestHospital.Latitude = plaats.Latitude;
                     }
                 }
                 nearestHospitalPoint = new Geopoint(nearestHospital);
